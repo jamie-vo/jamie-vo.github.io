@@ -5,4 +5,4 @@ navbar:
     - text: "Home"
       href: index.html
     - text: "The Bitter Truth"
-      href: brewing.nb.html
+      href: Brewing.html
