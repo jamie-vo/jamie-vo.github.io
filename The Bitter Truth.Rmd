@@ -24,8 +24,10 @@ library(shiny)
 ```
 
 ```{r echo = FALSE}
-beer = read.csv("data/Beers.csv",header = TRUE)
-breweries = read.csv("data/Breweries.csv",header = TRUE, strip.white = TRUE)
+myfile <- file.path("data", "/Beers.csv") 
+beer = read.csv(myfile,header = TRUE)
+myfile2 <- file.path("data", "/Breweries.csv") 
+breweries = read.csv(myfile2,header = TRUE, strip.white = TRUE)
 
 # merge on Brewery ID
 breweries_named <- plyr::rename(breweries, c("Brew_ID"="Brewery_id"))
