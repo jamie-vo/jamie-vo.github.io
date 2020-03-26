@@ -1,0 +1,8 @@
+name: "Jamie's Site"
+navbar:
+  title: "Jamie's Site"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "The Bitter Truth"
+      href: brewing.nb.html

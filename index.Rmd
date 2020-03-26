@@ -1,0 +1,22 @@
+---
+title: "About Me"
+author: "Jamie Vo"
+date: "3/25/2020"
+output: html_document
+---
+## Jamie Vo
+
+### Where I'm from:
+#### I was born in France and raised in Austin, TX. I currently am residing in Fort Collin, CO. 
+
+### My interests:
+#### I really enjoy painting and drawing in charcoal. I'm currently obsessed with gardening and trying to get back into <br>
+#### marathon running. 
+
+### Where I work:
+#### I'm currently a consultant for a software implementation company. Before that, I was a research chemist for some time. 
+
+### What school I attended:
+#### I received my bachelors in chemsitry from UT Austin.
+
+Check out the next tab! It's a case study my team and I recently worked on. 

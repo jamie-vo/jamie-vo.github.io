@@ -1,0 +1,164 @@
+---
+title: "The Bitter Truth"
+author: "Jamie Vo"
+date: "5/25/2020"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+library(rsconnect)
+# load in the libraries
+library(stringi)
+library(plotly)
+library(plyr)
+library(class)
+library(caret)
+library(e1071)
+library(tidyverse)
+library(shinydashboard)
+library(shiny)
+```
+
+```{r echo = FALSE}
+beer = read.csv("data/Beers.csv",header = TRUE)
+breweries = read.csv("data/Breweries.csv",header = TRUE, strip.white = TRUE)
+
+# merge on Brewery ID
+breweries_named <- plyr::rename(breweries, c("Brew_ID"="Brewery_id"))
+brewing_beer <- merge(breweries_named,beer,by="Brewery_id", all=TRUE)
+brewed_beer <- plyr::rename(brewing_beer, c("Name.x"="Brewery", "Name.y"="Beer"))
+
+
+# user interface
+ui <- fluidPage(
+  
+  # App title ----
+  titlePanel("The Bitter Truth!"),
+  
+  # Sidebar layout with input and output definitions ----
+  sidebarLayout(
+    
+    # Sidebar panel for inputs ----
+    sidebarPanel(
+      
+      #Input: Slider for the number of bins ----
+      sliderInput(inputId = "bins",
+                  label = "Number of bins:",
+                  min = 1,
+                  max = 50,
+                  value = 30),
+      
+      #Copy the line below to make a select box 
+       selectInput("select", label = h3("ABV or IBU"), 
+                    choices = list("ABV" = "ABV", "IBU" = "IBU"), 
+                    selected = 1),
+                    hr(),
+                    fluidRow(column(3, verbatimTextOutput("value"))),
+      #select a state
+      selectInput("state", label = h3("Select a state"),choices = unique(brewed_beer$State), selected =1),
+      
+      #select type of plot
+      radioButtons("graph", label = "Select the type of graph", choices =list("histogram", "boxplot", "scatter", "scatter with linear regression", "heatmap", selected = 1)),
+
+    ),
+    
+    # Main panel for displaying outputs ----
+    mainPanel(
+      
+      # Output: Histogram ----
+      plotOutput(outputId = "distPlot")
+      
+    )
+  )
+)
+
+
+# Define server logic required to draw a histogram ----
+server <- function(input, output) {
+  
+  # Histogram of the Old Faithful Geyser Data ----
+  # with requested number of bins
+  # This expression that generates a histogram is wrapped in a call
+  # to renderPlot to indicate that:
+  #
+  # 1. It is "reactive" and therefore should be automatically
+  #    re-executed when inputs (input$bins) change
+  # 2. Its output type is a plot
+  output$distPlot <- renderPlot({
+    
+    
+    if (input$graph == "heatmap") {
+      state_breweies <- breweries %>% group_by(State) %>% tally()
+      lstates = tolower(state.name)
+      state_count = state_breweies %>% 
+          rownames_to_column("region") %>% 
+          mutate( region=lstates[match(State, state.abb)] )
+      
+      ## find center of each state for text position 
+      snames <- data.frame(region=lstates, long=state.center$x, lat=state.center$y)
+      snames <- merge(snames, state_count, by="region")
+      
+      ## merge map data with counts data
+      choro <- left_join(
+        map_data("state"), 
+        state_count
+      )
+      p <- ggplot(choro, aes(long, lat)) +
+        geom_polygon(aes(group = group, fill = n)) + 
+        geom_text(data=snames, aes(long, lat, label=n)) +
+        coord_quickmap() + ggtitle("Heatmap of the Number of Breweries Per State")
+      plot(p)
+    }
+    
+    
+    if (input$graph == "scatter"){
+      df <- as.data.frame(brewed_beer %>% select("ABV", "IBU") %>% filter(brewed_beer$State == input$state))
+      reg1 <- lm(IBU~ABV,data=df) 
+	    with(df,plot(ABV, IBU, main="Scatter plot of ABV vs. IBU"))
+    }
+    if (input$graph == "scatter with linear regression"){
+      df <- as.data.frame(brewed_beer %>% select("ABV", "IBU") %>% filter(brewed_beer$State == input$state))
+      reg1 <- lm(IBU~ABV,data=df) 
+	
+	    with(df,plot(ABV, IBU, main="Scatter plot of ABV vs. IBU", abline(reg1)))
+    }
+    
+    
+    if(input$select == "ABV")
+    {
+    x    <- brewed_beer$ABV[brewed_beer$State == input$state]
+    #bins <- seq(min(x), max(x), length.out = input$bins + 1)
+      if (input$graph == "histogram"){ hist(x, col = "#75AADB", border = "white",
+         xlab = "Alcohol by Volume %",
+         main = "Histogram of ABV") }
+      if (input$graph == "boxplot") { boxplot(x, col = "#75AADB", border = "black",
+         xlab = "Alcohol by Volume %",
+         main = "Boxplot of ABV")
+        
+      }
+    }
+    if(input$select == "IBU")
+    {
+    x    <- brewed_beer$IBU[brewed_beer$State == input$state]
+    #bins <- seq(min(x), max(x), length.out = input$bins + 1)
+    
+    hist(x, col = "#75AADB", border = "white",
+         xlab = "International Bitterness Units",
+         main = "Histogram of IBU")
+    }
+          if (input$graph == "boxplot") { boxplot(x, col = "#75AADB", border = "black",
+         xlab = "International Bitterness Units",
+         main = "Boxplot of IBU")
+        
+      }
+  })
+  
+}
+
+shinyApp(ui, server)
+
+```
